@@ -1,0 +1,6 @@
+- id: building-codes
+  name: Enforce arbitrary coding standards
+  description: Loren ipsum
+  entry: buildingcodes
+  language: python
+  types: [cpp]

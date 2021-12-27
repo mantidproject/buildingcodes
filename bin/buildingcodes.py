@@ -4,17 +4,17 @@ import git
 import yaml
 from pathlib import Path
 import sys
-from typing import List, Optional, Sequence, Iterable
+from typing import List, Optional, Sequence
 
 
-class IgnoreItem():
-    def __init__(self, file: str, line:str = ''):
+class IgnoreItem:
+    def __init__(self, file: str, line: str = ""):
         self.filename = Path(file)
         # convert the line numbers to a list
-        if not str(line): # empty string
+        if not str(line):  # empty string
             self.linenum = []
         else:
-            self.linenum = [int(item) for item in str(line).split(',')]
+            self.linenum = [int(item) for item in str(line).split(",")]
         self._wholeFile = bool(len(self.linenum) == 0)
 
     def ignoreWholeFile(self, filename: Path) -> bool:
@@ -23,7 +23,8 @@ class IgnoreItem():
     def ignoreLine(self, filename: Path, linenum: int) -> bool:
         return self.filename == filename and linenum in self.linenum
 
-class Rule():
+
+class Rule:
     def __init__(self, pattern, message, ignore=[]):
         self.pattern = pattern
         self.message = message
@@ -44,21 +45,21 @@ class Rule():
     def match(self, line: str):
         return self.pattern in line
 
-def _get_repo_root() -> Path:
-    return git.Repo("", search_parent_directories=True)
 
 def _get_config_file() -> Path:
-    root_dir = Path(_get_repo_root().working_tree_dir)
-    return root_dir / '.buildingcodes.yaml'
+    repo_root = git.Repo("", search_parent_directories=True)
+    root_dir = Path(repo_root.working_tree_dir)
+    return root_dir / ".buildingcodes.yaml"
 
-def _create_rules(): # TODO
+
+def _create_rules():  # TODO
     # get the configuration file
     config_file = _get_config_file()
     if not config_file.exists():
         raise RuntimeError(f'Failed to find configuration file "{config_file}"')
 
     # convert configuration into a dict
-    with open(config_file, 'r') as file:
+    with open(config_file, "r") as file:
         configuration = yaml.safe_load(file)
     if not configuration:
         raise RuntimeError(f'Empty configurationfile "{config_file}"')
@@ -66,6 +67,7 @@ def _create_rules(): # TODO
     # convert configuration into rules
     rules = [Rule(**rule) for rule in configuration]
     return rules
+
 
 def _check_file(filepath: Path, rules: List[Rule]):
     # which rules should be used
@@ -75,7 +77,7 @@ def _check_file(filepath: Path, rules: List[Rule]):
             rule_indices.append(index)
 
     errors = 0
-    with open(filepath.resolve(strict=True), 'r') as handle:
+    with open(filepath.resolve(strict=True), "r") as handle:
         for linenum, line in enumerate(handle.readlines()):
             for rule_index in rule_indices:
                 rule = rules[rule_index]
@@ -83,7 +85,7 @@ def _check_file(filepath: Path, rules: List[Rule]):
                 if rule.ignoreLine(filepath, linenum):
                     # make sure that there is a match to suppress
                     if not matches:
-                        print(f'Unmatched suppression: {rule.pattern} in {filepath} line {linenum}')
+                        print(f"Unmatched suppression: {rule.pattern} in {filepath} line {linenum}")
                         errors += 1
                 elif matches:
                     print(filepath, linenum, rule.message, line[:-1])
@@ -93,7 +95,7 @@ def _check_file(filepath: Path, rules: List[Rule]):
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument('filenames', nargs='*', help='Filenames to check')
+    parser.add_argument("filenames", nargs="*", help="Filenames to check")
     args = parser.parse_args(argv)
 
     rules = _create_rules()
@@ -104,11 +106,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         errors += _check_file(filepath, rules)
 
     if errors > 0:
-        print(f'Found {errors} errors')
+        print(f"Found {errors} errors")
     return errors
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     # skip the name of the script
     sys.exit(main(sys.argv[1:]) > 0)

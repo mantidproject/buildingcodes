@@ -1,7 +1,7 @@
 - id: building-codes
   name: Enforce arbitrary coding standards
   description: Loren ipsum
-  entry: buildingcodes
+  entry: buildingcodes.py
   language: python
   additional_dependencies: [gitpython, pyyaml]
   types: [c++]

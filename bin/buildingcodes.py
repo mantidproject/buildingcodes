@@ -47,29 +47,35 @@ class Rule:
 
 
 def _get_config_file() -> Path:
+    """Returns the path to the configuration file in the target repository.
+    This will throw an exception if the configuration is 0 bytes or missing"""
     repo_root = git.Repo("", search_parent_directories=True)
     root_dir = Path(repo_root.working_tree_dir)
-    return root_dir / ".buildingcodes.yaml"
-
-
-def _create_rules():  # TODO
-    # get the configuration file
-    config_file = _get_config_file()
+    config_file = root_dir / ".buildingcodes.yaml"
     if not config_file.exists():
         raise RuntimeError(f'Failed to find configuration file "{config_file}"')
+    if config_file.stat().st_size <= 0:
+        raise RuntimeError(f'Configuration file "{config_file}" 0 bytes in size')
+
+    return config_file
+
+
+def _create_rules() -> List[Rule]:
+    # get the configuration file
+    config_file = _get_config_file()
 
     # convert configuration into a dict
     with open(config_file, "r") as file:
         configuration = yaml.safe_load(file)
     if not configuration:
-        raise RuntimeError(f'Empty configurationfile "{config_file}"')
+        raise RuntimeError(f'Empty configuration file "{config_file}"')
 
     # convert configuration into rules
     rules = [Rule(**rule) for rule in configuration]
     return rules
 
 
-def _check_file(filepath: Path, rules: List[Rule]):
+def _check_file(filepath: Path, rules: List[Rule]) -> int:
     # which rules should be used
     rule_indices = []
     for index, rule in enumerate(rules):
@@ -88,7 +94,8 @@ def _check_file(filepath: Path, rules: List[Rule]):
                         print(f"Unmatched suppression: {rule.pattern} in {filepath} line {linenum}")
                         errors += 1
                 elif matches:
-                    print(filepath, linenum, rule.message, line[:-1])
+                    print(f"{filepath}:{linenum}: {rule.message}")
+                    print(f"{linenum:4} | {line[:-1]}")  # trim off end-of-line
                     errors += 1
     return errors
 
@@ -100,10 +107,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     rules = _create_rules()
 
-    errors = 0
+    errors: int = 0  # number of errors
     for filename in args.filenames:
-        filepath = Path(filename)
-        errors += _check_file(filepath, rules)
+        errors += _check_file(Path(filename), rules)
 
     if errors > 0:
         print(f"Found {errors} errors")

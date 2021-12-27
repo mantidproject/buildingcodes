@@ -23,7 +23,6 @@ class IgnoreItem():
     def ignoreLine(self, filename: Path, linenum: int) -> bool:
         return self.filename == filename and linenum in self.linenum
 
-
 class Rule():
     def __init__(self, pattern, message, ignore=[]):
         self.pattern = pattern

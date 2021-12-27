@@ -3,4 +3,5 @@
   description: Loren ipsum
   entry: buildingcodes
   language: python
+  additional_dependencies: [gitpython, pyyaml]
   types: [c++]

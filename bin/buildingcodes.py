@@ -8,13 +8,14 @@ from typing import List, Optional, Sequence
 
 
 class IgnoreItem:
-    def __init__(self, file: str, line: str = ""):
+    def __init__(self, file: str, lines: str = ""):
         self.filename = Path(file)
         # convert the line numbers to a list
-        if not str(line):  # empty string
+        if not str(lines):  # empty string
             self.linenum = []
         else:
-            self.linenum = [int(item) for item in str(line).split(",")]
+            self.linenum = [int(item) for item in str(lines).split(",")]
+            self.linenum.sort()
         self._wholeFile = bool(len(self.linenum) == 0)
 
     def ignoreWholeFile(self, filename: Path) -> bool:
